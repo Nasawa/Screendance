@@ -1,0 +1,21 @@
+{
+    "display": {
+        "index": 1,
+        "resolution_width": 1920,
+        "resolution_height": 1080
+    },
+    "lights": {
+        "prefix": "basement_light_",
+        "columns": 3,
+        "rows": 2
+    },
+    "MQTT": {
+        "host": "homeassistant.local",
+        "port": 1883,
+        "write_topic": "gaming/lights/screendance",
+        "read_topic": "gaming/lights/illuminate"
+    },
+    "misc": {
+        "delay": 0.05
+    }
+}
