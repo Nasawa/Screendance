@@ -1,0 +1,254 @@
+[
+    {
+        "id": "61c20d6f340333ae",
+        "type": "tab",
+        "label": "Screendance",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "90fcf21d5642aa36",
+        "type": "mqtt in",
+        "z": "61c20d6f340333ae",
+        "name": "",
+        "topic": "gaming/lights/screendance",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "2cfc330c2e2b8896",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 250,
+        "y": 320,
+        "wires": [
+            [
+                "eab251442df1e1f2",
+                "9b053e9fdd6f7447",
+                "d03ffc689a4b6794"
+            ]
+        ]
+    },
+    {
+        "id": "0885716334a097c0",
+        "type": "api-call-service",
+        "z": "61c20d6f340333ae",
+        "name": "Update Lights",
+        "server": "8e41b81.4fba148",
+        "version": 5,
+        "debugenabled": false,
+        "domain": "light",
+        "service": "turn_on",
+        "areaId": [],
+        "deviceId": [],
+        "entityId": [],
+        "data": "",
+        "dataType": "jsonata",
+        "mergeContext": "",
+        "mustacheAltTags": false,
+        "outputProperties": [],
+        "queue": "none",
+        "x": 720,
+        "y": 320,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "1fcf98d1df9ea9c6",
+        "type": "inject",
+        "z": "61c20d6f340333ae",
+        "name": "Test Injector",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"basement_light_2\":{\"color\":{\"hue\":190.71,\"saturation\":0.01},\"brightness\":99.88}}",
+        "payloadType": "json",
+        "x": 210,
+        "y": 440,
+        "wires": [
+            [
+                "d03ffc689a4b6794",
+                "eab251442df1e1f2"
+            ]
+        ]
+    },
+    {
+        "id": "eab251442df1e1f2",
+        "type": "function",
+        "z": "61c20d6f340333ae",
+        "name": "Transformer - HSV",
+        "func": "const lights = msg.payload;\nconst calls = [];\n\nfor (const [lightName, hsv] of Object.entries(lights)) {\n    // Assuming that your HSV values are in the correct range\n    // Hue (0-360), Saturation (0-100), Value (0-100)\n    // If not, you need to scale them appropriately\n    calls.push({\n        payload: {\n            domain: \"light\",\n            service: \"turn_on\",\n            data: {\n                entity_id: `light.${lightName}`,\n                hs_color: [hsv.color.hue, hsv.color.saturation], // Hue and Saturation for HS color\n                //brightness: hsv[2] * (255 / 100) // Value converted to brightness (0-255)\n                brightness_pct: hsv.brightness\n            }\n        }\n    });\n}\n\n// Send each call as a separate message\nreturn [calls];",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 490,
+        "y": 320,
+        "wires": [
+            [
+                "0885716334a097c0"
+            ]
+        ]
+    },
+    {
+        "id": "9b053e9fdd6f7447",
+        "type": "debug",
+        "z": "61c20d6f340333ae",
+        "name": "MQTT Debug",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 480,
+        "y": 380,
+        "wires": []
+    },
+    {
+        "id": "993ad443114bc0aa",
+        "type": "api-call-service",
+        "z": "61c20d6f340333ae",
+        "name": "Update Light State",
+        "server": "8e41b81.4fba148",
+        "version": 5,
+        "debugenabled": false,
+        "domain": "input_text",
+        "service": "set_value",
+        "areaId": [],
+        "deviceId": [],
+        "entityId": [
+            "input_text.basement_light_state"
+        ],
+        "data": "",
+        "dataType": "jsonata",
+        "mergeContext": "",
+        "mustacheAltTags": false,
+        "outputProperties": [],
+        "queue": "none",
+        "x": 950,
+        "y": 440,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "226deef075316b46",
+        "type": "function",
+        "z": "61c20d6f340333ae",
+        "name": "Set light state",
+        "func": "msg.payload = {\n    data: {\n        value: \"screendance\"\n    }\n};\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 720,
+        "y": 440,
+        "wires": [
+            [
+                "993ad443114bc0aa"
+            ]
+        ]
+    },
+    {
+        "id": "d03ffc689a4b6794",
+        "type": "api-current-state",
+        "z": "61c20d6f340333ae",
+        "name": "Get light state",
+        "server": "8e41b81.4fba148",
+        "version": 3,
+        "outputs": 2,
+        "halt_if": "screendance",
+        "halt_if_type": "str",
+        "halt_if_compare": "is",
+        "entity_id": "input_text.basement_light_state",
+        "state_type": "str",
+        "blockInputOverrides": false,
+        "outputProperties": [
+            {
+                "property": "payload",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "entityState"
+            },
+            {
+                "property": "data",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "entity"
+            }
+        ],
+        "for": "0",
+        "forType": "num",
+        "forUnits": "minutes",
+        "override_topic": false,
+        "state_location": "payload",
+        "override_payload": "msg",
+        "entity_location": "data",
+        "override_data": "msg",
+        "x": 480,
+        "y": 440,
+        "wires": [
+            [],
+            [
+                "226deef075316b46"
+            ]
+        ]
+    },
+    {
+        "id": "2cfc330c2e2b8896",
+        "type": "mqtt-broker",
+        "name": "HASS Mosquitto",
+        "broker": "homeassistant.local",
+        "port": "1883",
+        "clientid": "",
+        "autoConnect": true,
+        "usetls": false,
+        "protocolVersion": "4",
+        "keepalive": "60",
+        "cleansession": true,
+        "autoUnsubscribe": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthRetain": "false",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closeQos": "0",
+        "closeRetain": "false",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willRetain": "false",
+        "willPayload": "",
+        "willMsg": {},
+        "userProps": "",
+        "sessionExpiry": ""
+    },
+    {
+        "id": "8e41b81.4fba148",
+        "type": "server",
+        "name": "Home Assistant",
+        "addon": true
+    }
+]

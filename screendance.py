@@ -4,24 +4,31 @@ import mss
 import time
 import colorsys
 import numpy as np
-from PIL import Image, ImageStat
+from PIL import Image
 import paho.mqtt.client as mqtt
-
-# Load MQTT credentials from a JSON file
-with open('mqtt_credentials.cred.json', 'r') as file:
-    credentials = json.load(file)
 
 # Load config from a JSON file
 with open('config.json', 'r') as file:
     config = json.load(file)
+
+# Load MQTT credentials from a JSON file
+if config['credentials']['enabled'] and config['credentials']['file']:
+    USE_CREDENTIALS = True
+    with open(config['credentials']['file'], 'r') as file:
+        credentials = json.load(file)
 
 # Define the MQTT server settings
 MQTT_SERVER = config['MQTT']['host']
 MQTT_PORT = config['MQTT']['port']
 MQTT_WRITE_TOPIC = config['MQTT']['write_topic']
 MQTT_READ_TOPIC = config['MQTT']['read_topic']
-MQTT_USERNAME = credentials['username']
-MQTT_PASSWORD = credentials['password']
+
+if USE_CREDENTIALS:
+    MQTT_USERNAME = credentials['username']
+    MQTT_PASSWORD = credentials['password']
+
+# Define debug state
+DEBUG = config['debug']
 
 is_script_enabled = False
 sections = None
@@ -64,7 +71,7 @@ def calculate_grid_sections(width, height, columns, rows):
     section_width = width // columns
     # Get the height of each section
     section_height = height // rows
-    counter = 1
+    counter = config['lights']['initial_index']
 
     for col in range(columns):
         for row in range(rows):
@@ -81,10 +88,14 @@ def calculate_grid_sections(width, height, columns, rows):
 # The callback for when a PUBLISH message is received from the server
 def on_message(client, userdata, msg):
     global is_script_enabled
-    print(f"Message received on topic {msg.topic} with QoS {msg.qos}. Full message: { msg.payload.decode('utf-8') }")
-    print(f"pre: is_script_enabled is {is_script_enabled}")
+    
+    if DEBUG: print(f"Message received on topic {msg.topic} with QoS {msg.qos}. Full message: { msg.payload.decode('utf-8') }")
+    if DEBUG: print(f"pre: is_script_enabled is {is_script_enabled}")
+
     is_script_enabled = msg.payload.decode("utf-8") == 'True'
-    print(f"post: is_script_enabled is {is_script_enabled}")
+
+    if DEBUG: print(f"post: is_script_enabled is {is_script_enabled}")
+
     thread = threading.Thread(target=screendance)
     thread.start()
 
@@ -92,7 +103,7 @@ def main():
     # Calculate the sections based on the given grid
     global sections
     sections = calculate_grid_sections(config['display']['resolution_width'], config['display']['resolution_height'], config['lights']['columns'], config['lights']['rows'])
-    # print('sections', sections)
+    if DEBUG: print('sections', sections)
 
     client.subscribe(MQTT_READ_TOPIC)
     client.on_message = on_message
@@ -122,16 +133,24 @@ def screendance():
         time.sleep(config['misc']['delay'])
 
         # Print the JSON object
-        # print(json_object)
+        if DEBUG: print('json object', json_object)
 
 if __name__ == "__main__":
     # Create a client instance
     client = mqtt.Client()
-    # Set the username and password
-    client.username_pw_set(MQTT_USERNAME, MQTT_PASSWORD)
+
+    if USE_CREDENTIALS:
+        # Set the username and password
+        client.username_pw_set(MQTT_USERNAME, MQTT_PASSWORD)
+
     # Connect to the MQTT server
     client.connect(MQTT_SERVER, MQTT_PORT, 60)
 
+    # TODO: Get cancelation logic set up
+    # try:
     main()
-
     client.loop_forever()
+    # except KeyboardInterrupt:
+    #     client.loop_stop()
+    #     client.disconnect()
+    #     exit()

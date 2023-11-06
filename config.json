@@ -6,6 +6,7 @@
     },
     "lights": {
         "prefix": "basement_light_",
+        "initial_index": 1,
         "columns": 3,
         "rows": 2
     },
@@ -16,6 +17,11 @@
         "read_topic": "gaming/lights/illuminate"
     },
     "misc": {
-        "delay": 0.05
-    }
+        "delay": 0.1
+    },
+    "credentials": {
+        "enabled": true,
+        "file": "./mqtt_credentials.cred.json"
+    },
+    "debug": false
 }
